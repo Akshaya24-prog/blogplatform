@@ -2,6 +2,8 @@
 
 Full-stack blog platform built with Django + Vanilla JS + PostgreSQL.
 
+**Live:** https://blogplatform-m07f.onrender.com
+
 ## Tech Stack
 
 | Component | Version |
