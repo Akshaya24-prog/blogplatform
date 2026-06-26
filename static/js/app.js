@@ -381,6 +381,7 @@ async function submitComment(postId, parentId = null) {
       body: JSON.stringify({ content, parent_id: parentId }),
     });
     const c = data.comment;
+    knownCommentIds.add(c.id);
     if (parentId) {
       const repliesContainer = document.getElementById(`replies-${parentId}`);
       repliesContainer.insertAdjacentHTML('beforeend', renderComment(c, postId, true));
