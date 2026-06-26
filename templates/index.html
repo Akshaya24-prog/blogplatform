@@ -115,7 +115,9 @@
     <p class="modal-sub">Already have one? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in</a></p>
     <div id="registerError" class="form-error hidden"></div>
     <label>Username</label>
-    <input id="regUsername" type="text" placeholder="choose_a_username">
+    <input id="regUsername" type="text" placeholder="choose_a_username" oninput="validateUsername()">
+    <p class="input-hint">Lowercase letters, numbers and symbols only — no capitals</p>
+    <div id="usernameError" class="field-error hidden"></div>
     <label>Email (optional)</label>
     <input id="regEmail" type="email" placeholder="you@email.com">
     <label>Password</label>

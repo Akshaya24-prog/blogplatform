@@ -44,6 +44,8 @@ def api_register(request):
 
     if not username or not password:
         return JsonResponse({'error': 'Username and password required'}, status=400)
+    if any(c.isupper() for c in username):
+        return JsonResponse({'error': 'Username cannot contain capital letters'}, status=400)
     if User.objects.filter(username=username).exists():
         return JsonResponse({'error': 'Username already taken'}, status=400)
     if email and User.objects.filter(email=email).exists():

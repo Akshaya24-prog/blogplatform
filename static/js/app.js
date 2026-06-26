@@ -124,12 +124,25 @@ async function doLogin() {
   }
 }
 
+function validateUsername() {
+  const val = document.getElementById('regUsername').value;
+  const errEl = document.getElementById('usernameError');
+  if (/[A-Z]/.test(val)) {
+    errEl.textContent = 'Username cannot contain capital letters';
+    errEl.classList.remove('hidden');
+    return false;
+  }
+  errEl.classList.add('hidden');
+  return true;
+}
+
 async function doRegister() {
   const username = document.getElementById('regUsername').value.trim();
   const email = document.getElementById('regEmail').value.trim();
   const password = document.getElementById('regPassword').value;
   const errEl = document.getElementById('registerError');
   errEl.classList.add('hidden');
+  if (!validateUsername()) return;
   try {
     const data = await api('/api/auth/register/', { method: 'POST', body: JSON.stringify({ username, email, password }) });
     STATE.user = data.user;
