@@ -9,6 +9,7 @@ let STATE = {
   hasMore: false,
   searchQuery: '',
   searchTimer: null,
+  currentPostId: null,
 };
 
 let postPollTimer   = null;
@@ -108,7 +109,11 @@ async function doLogin() {
     updateNavAuth();
     hideModal('loginModal');
     toast('Welcome back, ' + data.user.username + '!', 'success');
-    loadPosts(true);
+    if (STATE.currentPostId && document.getElementById('postPage').classList.contains('active')) {
+      openPost(STATE.currentPostId);
+    } else {
+      loadPosts(true);
+    }
   } catch (e) {
     errEl.textContent = e.message;
     errEl.classList.remove('hidden');
@@ -128,7 +133,11 @@ async function doRegister() {
     updateNavAuth();
     hideModal('registerModal');
     toast('Account created! Welcome, ' + data.user.username + '!', 'success');
-    loadPosts(true);
+    if (STATE.currentPostId && document.getElementById('postPage').classList.contains('active')) {
+      openPost(STATE.currentPostId);
+    } else {
+      loadPosts(true);
+    }
   } catch (e) {
     errEl.textContent = e.message;
     errEl.classList.remove('hidden');
@@ -223,6 +232,7 @@ function renderPosts(reset) {
 }
 
 async function openPost(postId) {
+  STATE.currentPostId = postId;
   showPage('post');
   stopPostRealtime();
   const container = document.getElementById('postDetail');
