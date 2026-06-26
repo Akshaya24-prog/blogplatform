@@ -33,42 +33,44 @@ Full-stack blog platform built with Django + Vanilla JS + PostgreSQL.
 - **User profiles** — view post + comment history; edit/delete own content
 - **Moderator panel** — users table, all posts, all comments with delete
 
-## Database Setup
+## Local Setup
 
-Create the database in PostgreSQL before running the app:
-
-```sql
-CREATE DATABASE threadline;
-```
-
-Then update `blogplatform/settings.py` with your credentials:
-
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'threadline',
-        'USER': 'postgres',       # your PostgreSQL username
-        'PASSWORD': '',           # your PostgreSQL password
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-```
-
-## Setup
-
-Open **Anaconda Prompt**, `cd` into the project folder, then run:
+**First time only** — creates the database and all tables automatically:
 
 ```bash
-# Run migrations (first time only)
-python manage.py migrate
+python setup_db.py
+```
 
-# Start server — serves both frontend and backend on port 8000
+This will prompt for your PostgreSQL password, create the `threadline` database, and run all migrations. It also creates a `.env` file if one doesn't exist.
+
+Then start the server:
+
+```bash
 python manage.py runserver
 ```
 
 Open http://127.0.0.1:8000 in your browser.
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in your values:
+
+```bash
+cp .env.example .env
+```
+
+| Variable | Description |
+|----------|-------------|
+| `SECRET_KEY` | Django secret key |
+| `DEBUG` | `True` for local, `False` for production |
+| `ALLOWED_HOSTS` | Comma-separated hostnames |
+| `DB_NAME` | PostgreSQL database name |
+| `DB_USER` | PostgreSQL username |
+| `DB_PASSWORD` | PostgreSQL password |
+| `DB_HOST` | Database host |
+| `DB_PORT` | Database port |
+
+On Render, set `DATABASE_URL` (from Neon) instead of the individual `DB_*` variables.
 
 ## API Endpoints
 
