@@ -1,17 +1,28 @@
 import json
+from datetime import timedelta
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.http import JsonResponse
+from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt, ensure_csrf_cookie
 from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
 from .models import Post, Comment, UserProfile, UserToken
 
 
 def is_moderator(user):
-    return user.is_authenticated and (user.is_staff or hasattr(user, 'profile') and user.profile.is_moderator)
+    return user.is_authenticated and (
+        user.is_staff or (hasattr(user, 'profile') and user.profile.is_moderator)
+    )
+
+
+def parse_json_body(request):
+    try:
+        return json.loads(request.body), None
+    except (json.JSONDecodeError, ValueError):
+        return None, JsonResponse({'error': 'Invalid request body'}, status=400)
 
 
 @ensure_csrf_cookie
@@ -24,7 +35,9 @@ def index(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_register(request):
-    data = json.loads(request.body)
+    data, err = parse_json_body(request)
+    if err:
+        return err
     username = data.get('username', '').strip()
     email = data.get('email', '').strip()
     password = data.get('password', '')
@@ -46,10 +59,13 @@ def api_register(request):
 @csrf_exempt
 @require_http_methods(["POST"])
 def api_login(request):
-    data = json.loads(request.body)
+    data, err = parse_json_body(request)
+    if err:
+        return err
     user = authenticate(request, username=data.get('username'), password=data.get('password'))
     if user:
         login(request, user)
+        UserToken.objects.filter(user=user, created_at__lt=timezone.now() - timedelta(days=7)).delete()
         token = UserToken.create_for(user)
         return JsonResponse({'user': serialize_user(user), 'token': token.key})
     return JsonResponse({'error': 'Invalid credentials'}, status=401)
@@ -72,7 +88,6 @@ def api_me(request):
 
 
 def serialize_user(user):
-    profile = getattr(user, 'profile', None)
     return {
         'id': user.id,
         'username': user.username,
@@ -90,7 +105,7 @@ def api_posts(request):
         search = request.GET.get('q', '').strip()
         qs = Post.objects.select_related('author').all()
         if search:
-            qs = qs.filter(title__icontains=search) | qs.filter(content__icontains=search)
+            qs = qs.filter(Q(title__icontains=search) | Q(content__icontains=search))
         qs = qs.order_by('-created_at')
         paginator = Paginator(qs, 10)
         pg = paginator.get_page(page)
@@ -144,7 +159,9 @@ def api_post_detail(request, post_id):
                 post.file_attachment = f
                 post.file_attachment_name = f.name
         else:
-            data = json.loads(request.body)
+            data, err = parse_json_body(request)
+            if err:
+                return err
             post.title = data.get('title', post.title).strip()
             post.content = data.get('content', post.content).strip()
         post.save()
@@ -203,7 +220,9 @@ def api_comments(request, post_id):
     elif request.method == 'POST':
         if not request.user.is_authenticated:
             return JsonResponse({'error': 'Login required'}, status=401)
-        data = json.loads(request.body)
+        data, err = parse_json_body(request)
+        if err:
+            return err
         content = data.get('content', '').strip()
         parent_id = data.get('parent_id')
         if not content:
@@ -223,7 +242,9 @@ def api_comment_detail(request, comment_id):
             return JsonResponse({'error': 'Login required'}, status=401)
         if comment.author != request.user and not is_moderator(request.user):
             return JsonResponse({'error': 'Forbidden'}, status=403)
-        data = json.loads(request.body)
+        data, err = parse_json_body(request)
+        if err:
+            return err
         comment.content = data.get('content', comment.content).strip()
         comment.save()
         return JsonResponse({'comment': serialize_comment(comment, request.user)})
@@ -245,25 +266,31 @@ def api_comment_vote(request, comment_id):
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'Login required'}, status=401)
     comment = get_object_or_404(Comment, id=comment_id)
-    data = json.loads(request.body)
+    data, err = parse_json_body(request)
+    if err:
+        return err
     vote = data.get('vote')  # 'like' or 'dislike'
+    user_liked = False
+    user_disliked = False
     if vote == 'like':
         comment.dislikes.remove(request.user)
         if request.user in comment.likes.all():
             comment.likes.remove(request.user)
         else:
             comment.likes.add(request.user)
+            user_liked = True
     elif vote == 'dislike':
         comment.likes.remove(request.user)
         if request.user in comment.dislikes.all():
             comment.dislikes.remove(request.user)
         else:
             comment.dislikes.add(request.user)
+            user_disliked = True
     return JsonResponse({
         'likes': comment.likes.count(),
         'dislikes': comment.dislikes.count(),
-        'user_liked': request.user in comment.likes.all(),
-        'user_disliked': request.user in comment.dislikes.all(),
+        'user_liked': user_liked,
+        'user_disliked': user_disliked,
     })
 
 
