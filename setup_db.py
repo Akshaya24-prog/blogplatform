@@ -87,6 +87,13 @@ def run_migrations():
     return result.returncode == 0
 
 
+def seed_users():
+    manage = os.path.join(BASE_DIR, "manage.py")
+    print("\nSeeding demo users...")
+    result = subprocess.run([sys.executable, manage, "seed_users"], cwd=BASE_DIR)
+    return result.returncode == 0
+
+
 if __name__ == "__main__":
     print("=== Threadline Blog — Database Setup ===\n")
 
@@ -100,6 +107,8 @@ if __name__ == "__main__":
     if not run_migrations():
         print("\n[error] Migration failed.")
         sys.exit(1)
+
+    seed_users()
 
     print("\n=== Setup complete! ===")
     print("Start the server:  python manage.py runserver")
