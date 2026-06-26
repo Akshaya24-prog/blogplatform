@@ -89,11 +89,15 @@ function updateNavAuth() {
     document.getElementById('navUser').classList.remove('hidden');
     document.getElementById('avatarInitial').textContent = u.username[0].toUpperCase();
     document.getElementById('avatarBtn').title = u.username;
-    if (u.is_moderator) document.getElementById('modLink').classList.remove('hidden');
+    if (u.is_moderator) {
+      document.getElementById('modLink').classList.remove('hidden');
+      document.getElementById('usersNavBtn').classList.remove('hidden');
+    }
   } else {
     document.getElementById('navActions').classList.remove('hidden');
     document.getElementById('navUser').classList.add('hidden');
     document.getElementById('modLink').classList.add('hidden');
+    document.getElementById('usersNavBtn').classList.add('hidden');
   }
 }
 
@@ -263,9 +267,8 @@ function renderPostDetail(post, comments, container) {
         <span class="author-tag" style="cursor:pointer" onclick="showUserProfile('${esc(post.author)}')">${esc(post.author)}</span>
         <span>·</span><span>${dateStr}</span>
         <span>·</span><span>${post.comment_count} comments</span>
-        ${isOwner ? `<span>·</span><button class="btn btn-ghost sm" onclick="editPost(${post.id})">Edit</button>` : ''}
+        ${isOwner ? `<span>·</span><button class="btn btn-ghost sm" onclick="editPost(${post.id})">Edit</button><span>·</span><button class="btn btn-danger sm" onclick="deletePost(${post.id})">Delete</button>` : ''}
         ${canEdit && !isOwner ? `<span>·</span><button class="btn btn-danger sm" onclick="deletePost(${post.id})">Delete</button>` : ''}
-        ${isOwner ? `<button class="btn btn-danger sm" onclick="deletePost(${post.id})">Delete</button>` : ''}
       </div>
       ${post.image ? `<img class="post-detail-img" src="${post.image}" alt="${esc(post.title)}">` : ''}
       <div class="post-detail-content">${esc(post.content)}</div>
