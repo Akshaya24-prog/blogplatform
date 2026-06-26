@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Threadline — Blog Platform</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar">
+  <a class="brand" href="#" onclick="showPage('home')">
+    <span class="brand-mark">T</span>hreadline
+  </a>
+  <div class="nav-center">
+    <div class="search-wrap">
+      <input id="searchInput" type="text" placeholder="Search posts…" oninput="debounceSearch()">
+      <span class="search-icon">⌕</span>
+    </div>
+  </div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle light / dark">☀</button>
+  <div class="nav-actions" id="navActions">
+    <button class="btn btn-ghost" onclick="showModal('loginModal')">Log in</button>
+    <button class="btn btn-primary" onclick="showModal('registerModal')">Sign up</button>
+  </div>
+  <div class="nav-user hidden" id="navUser">
+    <button class="btn btn-primary" onclick="showCreatePost()">+ New Post</button>
+    <div class="avatar-menu">
+      <button class="avatar-btn" id="avatarBtn" onclick="toggleUserMenu()">
+        <span id="avatarInitial">?</span>
+      </button>
+      <div class="dropdown hidden" id="userDropdown">
+        <a href="#" onclick="showProfile()">My Profile</a>
+        <a href="#" id="modLink" class="hidden" onclick="showPage('mod')">Moderator Panel</a>
+        <hr>
+        <a href="#" onclick="doLogout()">Log out</a>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<main id="mainContent">
+
+  <!-- HOME PAGE -->
+  <div id="homePage" class="page active">
+    <div class="hero">
+      <h1>Stories worth <em>reading.</em></h1>
+      <p>A space where ideas breathe. Write, share, discuss.</p>
+    </div>
+    <div class="container">
+      <div class="posts-grid" id="postsGrid">
+        <div class="loading-posts">Loading posts…</div>
+      </div>
+      <div class="load-more-wrap hidden" id="loadMoreWrap">
+        <button class="btn btn-outline" onclick="loadMorePosts()">Load more</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- POST DETAIL PAGE -->
+  <div id="postPage" class="page">
+    <div class="container narrow" id="postDetail"></div>
+  </div>
+
+  <!-- PROFILE PAGE -->
+  <div id="profilePage" class="page">
+    <div class="container narrow" id="profileContent"></div>
+  </div>
+
+  <!-- MOD PAGE -->
+  <div id="modPage" class="page">
+    <div class="container">
+      <h2 class="page-title">Moderator Panel</h2>
+      <div class="tabs">
+        <button class="tab active" onclick="modTab('users')">Users</button>
+        <button class="tab" onclick="modTab('posts')">Posts</button>
+        <button class="tab" onclick="modTab('comments')">Comments</button>
+      </div>
+      <div id="modContent"></div>
+    </div>
+  </div>
+
+</main>
+
+<!-- ═══ MODALS ═══ -->
+
+<!-- LOGIN -->
+<div class="modal-overlay hidden" id="loginModal">
+  <div class="modal">
+    <button class="modal-close" onclick="hideModal('loginModal')">×</button>
+    <h2>Welcome back</h2>
+    <p class="modal-sub">Don't have an account? <a href="#" onclick="switchModal('loginModal','registerModal')">Sign up</a></p>
+    <div id="loginError" class="form-error hidden"></div>
+    <label>Username</label>
+    <input id="loginUsername" type="text" placeholder="your_username" onkeydown="if(event.key==='Enter')doLogin()">
+    <label>Password</label>
+    <div class="pw-wrap">
+      <input id="loginPassword" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()">
+      <button type="button" class="pw-toggle" onclick="togglePw('loginPassword',this)" tabindex="-1">👁</button>
+    </div>
+    <button class="btn btn-primary full" onclick="doLogin()">Log in</button>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div class="modal-overlay hidden" id="registerModal">
+  <div class="modal">
+    <button class="modal-close" onclick="hideModal('registerModal')">×</button>
+    <h2>Create account</h2>
+    <p class="modal-sub">Already have one? <a href="#" onclick="switchModal('registerModal','loginModal')">Log in</a></p>
+    <div id="registerError" class="form-error hidden"></div>
+    <label>Username</label>
+    <input id="regUsername" type="text" placeholder="choose_a_username">
+    <label>Email (optional)</label>
+    <input id="regEmail" type="email" placeholder="you@email.com">
+    <label>Password</label>
+    <div class="pw-wrap">
+      <input id="regPassword" type="password" placeholder="••••••••">
+      <button type="button" class="pw-toggle" onclick="togglePw('regPassword',this)" tabindex="-1">👁</button>
+    </div>
+    <button class="btn btn-primary full" onclick="doRegister()">Create account</button>
+  </div>
+</div>
+
+<!-- CREATE / EDIT POST -->
+<div class="modal-overlay hidden" id="postModal">
+  <div class="modal modal-wide">
+    <button class="modal-close" onclick="hideModal('postModal')">×</button>
+    <h2 id="postModalTitle">New Post</h2>
+    <div id="postFormError" class="form-error hidden"></div>
+    <input type="hidden" id="editPostId">
+    <label>Title</label>
+    <input id="postTitle" type="text" placeholder="What's this about?">
+    <label>Content</label>
+    <textarea id="postContent" rows="8" placeholder="Write something interesting…"></textarea>
+    <label>Cover Image <span class="label-hint">(optional)</span></label>
+    <div class="file-drop" id="imageDropZone" onclick="document.getElementById('postImageInput').click()">
+      <span id="imageDropLabel">Click or drag an image here</span>
+      <input id="postImageInput" type="file" accept="image/*" style="display:none" onchange="handleImagePreview(this)">
+    </div>
+    <p class="img-url-sep">— or paste an image link —</p>
+    <input id="postImageUrl" type="url" placeholder="https://example.com/photo.jpg" oninput="handleImageUrl(this.value)">
+    <img id="imagePreview" class="img-preview hidden" alt="preview">
+    <label>Attachment <span class="label-hint">(any file, optional)</span></label>
+    <div class="file-drop small" onclick="document.getElementById('postAttachInput').click()">
+      <span id="attachLabel">Click to select a file</span>
+      <input id="postAttachInput" type="file" style="display:none" onchange="handleAttachLabel(this)">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" onclick="hideModal('postModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="submitPost()">Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast hidden"></div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>

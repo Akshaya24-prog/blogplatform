@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: blogplatform
+    env: python
+    buildCommand: "bash build.sh"
+    startCommand: "gunicorn blogplatform.wsgi:application"
+    envVars:
+      - key: SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DATABASE_URL
+        sync: false  # Paste your Neon connection string here in the Render dashboard
+    autoDeploy: true

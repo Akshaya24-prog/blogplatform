@@ -1,0 +1,8 @@
+Django==5.1.15
+psycopg2-binary==2.9.12
+django-cors-headers==4.9.0
+Pillow==12.0.0
+gunicorn==26.0.0
+whitenoise==6.12.0
+dj-database-url==3.1.2
+python-decouple==3.8
